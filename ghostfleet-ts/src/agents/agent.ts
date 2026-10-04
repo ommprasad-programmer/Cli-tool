@@ -9,7 +9,10 @@ export type AgentStatus =
   | "ERROR"
   | "DONE"
   | "PAUSED"
-  | "HIBERNATED";
+  | "HIBERNATED"
+  | "COMPLETED"
+  | "FAILED"
+  | "TERMINATED";
 
 export interface Agent {
   id: string;

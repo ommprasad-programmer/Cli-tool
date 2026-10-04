@@ -11,6 +11,7 @@ import { AgentRegistry } from '../agents/agent-registry.js';
 import { Agent } from '../agents/agent.js';
 import { EventBus } from '../events/event-bus.js';
 import { ResourceGovernor } from './resource-governor.js';
+import { ShellAgentRunner } from './agent-runner.js';
 
 export class AgentManager {
   private projectManager: ProjectManager;
@@ -70,13 +71,10 @@ export class AgentManager {
     this.eventBus.emit('agent.status', agent.id, 'STARTING');
     
     await tmuxManager.createServer();
-    await tmuxManager.createSession(tmuxSession, worktreePath);
+    await tmuxManager.createPersistentSession(tmuxSession, worktreePath);
 
-    const safeTask = task.replace(/"/g, '\\"');
-    await tmuxManager.sendKeys(tmuxSession, `echo 'Spawning targeted AI Agent workflow for task: "${safeTask}"'\\n`);
-
-    this.registry.update(agent.id, { status: 'IDLE' });
-    this.eventBus.emit('agent.status', agent.id, 'IDLE');
+    const runner = new ShellAgentRunner();
+    await runner.start(agent);
 
     agent = this.registry.get(agent.id)!;
     this.eventBus.emit('agent.spawned', agent);
@@ -102,7 +100,7 @@ export class AgentManager {
     if (!agent) throw new Error(`Agent ${agentId} not found`);
 
     const tmuxManager = new TmuxManager(agent.projectId);
-    await tmuxManager.sendKeys(agent.tmuxSession, 'C-z');
+    await tmuxManager.sendKeys(agent.tmuxSession, 'C-z', false);
     
     this.registry.update(agent.id, { status: 'PAUSED' });
     this.eventBus.emit('agent.status', agent.id, 'PAUSED');
@@ -113,16 +111,40 @@ export class AgentManager {
     if (!agent) throw new Error(`Agent ${agentId} not found`);
 
     const tmuxManager = new TmuxManager(agent.projectId);
-    await tmuxManager.sendKeys(agent.tmuxSession, 'fg\\n');
+    await tmuxManager.sendKeys(agent.tmuxSession, 'fg', true);
     
     this.registry.update(agent.id, { status: 'RUNNING' });
     this.eventBus.emit('agent.status', agent.id, 'RUNNING');
   }
 
   async analyzePane(agentId: string): Promise<void> {
-    const output = await this.read(agentId, 10);
     const agent = this.registry.get(agentId);
     if (!agent) throw new Error(`Agent ${agentId} not found`);
+
+    const tmuxManager = new TmuxManager(agent.projectId);
+    const alive = await tmuxManager.sessionExists(agent.tmuxSession);
+    if (!alive) {
+      if (agent.status === 'RUNNING' || agent.status === 'STARTING') {
+        this.registry.update(agent.id, { status: 'FAILED', error: 'Tmux session unexpectedly terminated' });
+        this.eventBus.emit('agent.status', agent.id, 'FAILED');
+      }
+      return;
+    }
+
+    const output = await this.read(agentId, 15);
+
+    if (output.includes('GHOSTFLEET_EXIT_CODE=')) {
+      const match = output.match(/GHOSTFLEET_EXIT_CODE=(\\d+)/);
+      if (match) {
+        const code = match[1];
+        const finalStatus = code === '0' ? 'COMPLETED' : 'FAILED';
+        if (agent.status !== finalStatus && agent.status !== 'TERMINATED') {
+          this.registry.update(agent.id, { status: finalStatus });
+          this.eventBus.emit('agent.status', agent.id, finalStatus);
+        }
+      }
+      return;
+    }
 
     const lines = output.split('\\n');
     let needsPermission = false;

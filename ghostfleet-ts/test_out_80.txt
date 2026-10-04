@@ -1,0 +1,30 @@
+Starting PookieStack Dashboard...
+╭──────────────────────────────────────────────────────────────╮
+│                                                              │
+│  ██████╗  ██████╗  ██████╗ ██╗  ██╗██╗███████╗████████╗     │
+│  ██╔══██╗██╔═══██╗██╔═══██╗██║ ██╔╝██║██╔════╝╚══██╔══╝     │
+│  ██████╔╝██║   ██║██║   ██║█████╔╝ ██║█████╗     ██║        │
+│  ██╔═══╝ ██║   ██║██║   ██║██╔═██╗ ██║██╔══╝     ██║        │
+│  ██║     ╚██████╔╝╚██████╔╝██║  ██╗██║███████╗   ██║        │
+│  ╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝   ╚═╝        │
+│                                                              │
+│             🧸  Stack your pookies. Ship code.              │
+│                                                              │
+╰──────────────────────────────────────────────────────────────╯
+┌─────────┬────────────┬────────────┬───────────┬──────────────────────────────────┐
+│ (index) │ ID         │ Project    │ Status    │ Task                             │
+├─────────┼────────────┼────────────┼───────────┼──────────────────────────────────┤
+│ 0       │ 'ef31c805' │ '42a8d45c' │ 'IDLE'    │ "echo 'I am GhostFleet'"         │
+│ 1       │ '851fc6aa' │ '7770659e' │ 'IDLE'    │ 'List the files in the project'  │
+│ 2       │ '0b72fab5' │ '42a8d45c' │ 'WAITING' │ 'Validate architecture'          │
+│ 3       │ '2029fac2' │ '42a8d45c' │ 'WAITING' │ 'Validate architecture'          │
+│ 4       │ 'a9d5316e' │ '42a8d45c' │ 'WAITING' │ 'Validate Tmux State'            │
+│ 5       │ 'a2bfc5ce' │ '42a8d45c' │ 'WAITING' │ 'Validate architecture'          │
+│ 6       │ '98fa2146' │ '42a8d45c' │ 'WAITING' │ 'Acceptance test'                │
+│ 7       │ 'adffefca' │ '7770659e' │ 'FAILED'  │ 'List the files in this proj...' │
+│ 8       │ 'eba6038e' │ '7770659e' │ 'WAITING' │ 'List the files in the project'  │
+│ 9       │ '3abbd91d' │ '42a8d45c' │ 'FAILED'  │ 'Test'                           │
+│ 10      │ 'e880bf76' │ '42a8d45c' │ 'FAILED'  │ 'List the files in the project'  │
+│ 11      │ '6c41d985' │ '7770659e' │ 'FAILED'  │ 'Create a file named ghostfl...' │
+└─────────┴────────────┴────────────┴───────────┴──────────────────────────────────┘
+\nPress Ctrl+C to exit.
