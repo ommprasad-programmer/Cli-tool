@@ -12,6 +12,8 @@ import { Agent } from '../agents/agent.js';
 import { EventBus } from '../events/event-bus.js';
 import { ResourceGovernor } from './resource-governor.js';
 import { ShellAgentRunner } from './agent-runner.js';
+import { AgentDiscovery } from '../agents/agent-discovery.js';
+import { AgentModelConfig } from '../agents/agent-adapter.js';
 
 export class AgentManager {
   private projectManager: ProjectManager;
@@ -24,7 +26,7 @@ export class AgentManager {
     this.eventBus = EventBus.getInstance();
   }
 
-  async spawnAgent(projectNameOrId: string, task: string, options?: { role?: 'LEAD' | 'WORKER'; parentId?: string; }): Promise<Agent> {
+  async spawnAgent(projectNameOrId: string, task: string, options?: { role?: 'LEAD' | 'WORKER'; parentId?: string; agentConfigId?: string; modelConfig?: AgentModelConfig }): Promise<Agent> {
     ResourceGovernor.checkConcurrency();
 
     const projects = await this.projectManager.list();
@@ -74,7 +76,15 @@ export class AgentManager {
     await tmuxManager.createPersistentSession(tmuxSession, worktreePath);
 
     const runner = new ShellAgentRunner();
-    await runner.start(agent);
+    
+    if (options && options.agentConfigId) {
+      const discovery = AgentDiscovery.getInstance();
+      await discovery.loadCustomAgents();
+      const adapter = discovery.getAdapter(options.agentConfigId);
+      await runner.start(agent, adapter, { modelConfig: options.modelConfig });
+    } else {
+      await runner.start(agent);
+    }
 
     agent = this.registry.get(agent.id)!;
     this.eventBus.emit('agent.spawned', agent);

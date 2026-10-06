@@ -29,10 +29,16 @@ program
   .description('Spawn an AI agent in a new isolated git worktree / tmux session')
   .requiredOption('-p, --project <nameOrId>', 'Target project name or ID')
   .requiredOption('-t, --task <task>', 'Initial task prompt')
+  .option('-a, --agent <agentId>', 'Preset or configured agent ID to use (e.g., aider, claude)')
+  .option('-m, --model <model>', 'Model identifier (e.g., ollama/qwen2.5-coder:3b)')
   .action(async (options) => {
     try {
       const am = new AgentManager();
-      const agent = await am.spawnAgent(options.project, options.task);
+      const modelConfig = options.model ? { model: options.model } : undefined;
+      const agent = await am.spawnAgent(options.project, options.task, { 
+        agentConfigId: options.agent, 
+        modelConfig 
+      });
       console.log(`✅ Agent spawned successfully: ID ${agent.id}`);
       console.log(`- Project: ${agent.projectId}`);
       console.log(`- Worktree path: ${agent.worktree}`);
@@ -112,6 +118,37 @@ agentCmd
     } catch (e: any) {
       console.error(`❌ Error termingating agent: ${e.message}`);
     }
+  });
+
+agentCmd
+  .command('detect')
+  .description('Detect installed and configured AI agents')
+  .action(async () => {
+    try {
+      const { AgentDiscovery } = await import('../agents/agent-discovery.js');
+      const d = AgentDiscovery.getInstance();
+      await d.loadCustomAgents();
+      const results = await d.detectAll();
+      console.log('\\nAgent Discovery\\n');
+      for (const r of results) {
+        const mark = r.installed ? '✓' : '✗';
+        const versionStr = r.version ? `v${r.version}` : (r.installed ? 'detected' : 'not installed');
+        console.log(`${mark} ${r.manifest.name.padEnd(12)} ${versionStr}`);
+      }
+      console.log('');
+    } catch (e: any) {
+      console.error(`❌ Error detecting agents: ${e.message}`);
+    }
+  });
+
+agentCmd
+  .command('list')
+  .description('List configured agents')
+  .action(async () => {
+    const { AgentDiscovery } = await import('../agents/agent-discovery.js');
+    const d = AgentDiscovery.getInstance();
+    await d.loadCustomAgents();
+    console.table(d.listAllManifests().map(m => ({ ID: m.id, Name: m.name, Command: m.command })));
   });
 
 program
